@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Safe Route Finder</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Heatmap Plugin -->
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <h2>🚦 Safe Route Finder</h2>
+
+  <!-- 🔍 INPUT SECTION -->
+  <div class="controls">
+
+    <!-- START LOCATION -->
+    <input 
+      type="text" 
+      id="start" 
+      placeholder="Enter Start Location"
+      oninput="suggestLocation(this, 'start-list')"
+      list="start-list"
+    >
+    <datalist id="start-list"></datalist>
+
+    <!-- END LOCATION -->
+    <input 
+      type="text" 
+      id="end" 
+      placeholder="Enter Destination"
+      oninput="suggestLocation(this, 'end-list')"
+      list="end-list"
+    >
+    <datalist id="end-list"></datalist>
+
+    <br><br>
+
+    <!-- BUTTONS -->
+    <button onclick="findRoute()">🚗 Find Safe Route</button>
+    <button onclick="showHeatmap()">🔥 Show Crime Heatmap</button>
+    <button onclick="triggerSOS()">🚨 SOS</button>
+
+  </div>
+
+  <!-- RESULT DISPLAY -->
+  <p id="result"></p>
+
+  <!-- MAP -->
+  <div id="map"></div>
+
+  <!-- SCRIPT -->
+  <script src="script.js"></script>
+
+</body>
+</html>
