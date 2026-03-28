@@ -3,6 +3,7 @@ from flask_cors import CORS
 import joblib
 import pandas as pd
 import numpy as np
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -28,7 +29,7 @@ def get_nearest_area(lat, lon):
         )
 
         nearest = df.loc[df["distance"].idxmin()]
-        return nearest
+        return nearest.copy()   # ✅ avoid modifying original
 
     except Exception as e:
         print("Error in nearest area:", e)
@@ -43,8 +44,17 @@ def predict():
     try:
         data = request.json
 
-        lat = float(data.get("Latitude"))
-        lon = float(data.get("Longitude"))
+        if not data:
+            return jsonify({"error": "No input data"}), 400
+
+        lat = data.get("Latitude")
+        lon = data.get("Longitude")
+
+        if lat is None or lon is None:
+            return jsonify({"error": "Latitude and Longitude required"}), 400
+
+        lat = float(lat)
+        lon = float(lon)
 
         # 🔥 Get nearest area
         area = get_nearest_area(lat, lon)
@@ -57,6 +67,7 @@ def predict():
         # ----------------------
         area['Risk_Density'] = area['Crime_Index'] * area['Crowd_Density']
         area['Safety_Inverse'] = 1 / (area['Police_Distance_km'] + 1)
+
         features = [[
             area["Crime_Index"],
             area["Crowd_Density"],
@@ -83,7 +94,7 @@ def predict():
 
 
 # ----------------------
-# 🔥 HEATMAP API (NEW)
+# 🔥 HEATMAP API
 # ----------------------
 @app.route("/heatmap", methods=["GET"])
 def heatmap():
@@ -94,7 +105,7 @@ def heatmap():
             heat_data.append({
                 "lat": float(row["Latitude"]),
                 "lon": float(row["Longitude"]),
-                "intensity": float(row["Crime_Index"]) / 100  # normalize
+                "intensity": float(row["Crime_Index"]) / 100
             })
 
         return jsonify(heat_data)
@@ -112,7 +123,8 @@ def home():
 
 
 # ----------------------
-# ▶️ RUN SERVER
+# ▶️ RUN SERVER (FOR LOCAL ONLY)
 # ----------------------
 if __name__ == "__main__":
-    app.run(debug=True, port=5003)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
