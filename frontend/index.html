@@ -3,62 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <title>Safe Route Finder</title>
-
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-  <!-- Heatmap Plugin -->
-  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-
-  <!-- CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
+<body class="home">
 
-<body>
-
-  <h2>🚦 Safe Route Finder</h2>
-
-  <!-- 🔍 INPUT SECTION -->
-  <div class="controls">
-
-    <!-- START LOCATION -->
-    <input 
-      type="text" 
-      id="start" 
-      placeholder="Enter Start Location"
-      oninput="suggestLocation(this, 'start-list')"
-      list="start-list"
-    >
-    <datalist id="start-list"></datalist>
-
-    <!-- END LOCATION -->
-    <input 
-      type="text" 
-      id="end" 
-      placeholder="Enter Destination"
-      oninput="suggestLocation(this, 'end-list')"
-      list="end-list"
-    >
-    <datalist id="end-list"></datalist>
-
-    <br><br>
-
-    <!-- BUTTONS -->
-    <button onclick="findRoute()">🚗 Find Safe Route</button>
-    <button onclick="showHeatmap()">🔥 Show Crime Heatmap</button>
-    <button onclick="triggerSOS()">🚨 SOS</button>
-
+  <div class="navbar">
+    <h1>🚦 SafeRoute</h1>
   </div>
 
-  <!-- RESULT DISPLAY -->
-  <p id="result"></p>
+  <div class="home-container">
+    <h2>Navigate Safely, Smarter</h2>
+    <p>Find the safest routes, avoid risky areas, and stay protected.</p>
 
-  <!-- MAP -->
-  <div id="map"></div>
-
-  <!-- SCRIPT -->
-  <script src="script.js"></script>
+    <div class="cards">
+      <a href="route.html" class="card">🚗 Find Route</a>
+      <a href="heatmap.html" class="card">🔥 Crime Heatmap</a>
+      <a href="sos.html" class="card sos">🚨 Emergency SOS</a>
+    </div>
+  </div>
 
 </body>
 </html>

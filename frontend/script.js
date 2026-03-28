@@ -1,18 +1,38 @@
 // ----------------------
+// 🌍 CONFIG (IMPORTANT)
+// ----------------------
+const BASE_URL = "https://safe-path-router.onrender.com"; 
+// 🔥 replace with your Render backend URL
+
+
+// ----------------------
+// 🌐 GLOBAL VARIABLES
+// ----------------------
+let map = null;
+let routeLayers = [];
+let heatLayer = null;
+
+
+// ----------------------
 // 🗺️ INITIALIZE MAP
 // ----------------------
-const map = L.map('map').setView([13.0827, 80.2707], 12);
+function initMap() {
+  const mapContainer = document.getElementById("map");
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: "© OpenStreetMap"
-}).addTo(map);
+  if (!mapContainer) return; // ✅ prevents errors on other pages
 
-let routeLayers = [];
-let heatLayer; // 🔥 NEW
+  map = L.map('map').setView([13.0827, 80.2707], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: "© OpenStreetMap"
+  }).addTo(map);
+}
+
+window.onload = initMap;
 
 
 // ----------------------
-// 🔍 AUTOCOMPLETE (NEW)
+// 🔍 AUTOCOMPLETE
 // ----------------------
 async function suggestLocation(input, listId) {
 
@@ -28,6 +48,8 @@ async function suggestLocation(input, listId) {
     const data = await res.json();
 
     const list = document.getElementById(listId);
+    if (!list) return;
+
     list.innerHTML = "";
 
     data.slice(0, 5).forEach(place => {
@@ -62,37 +84,31 @@ async function getCoordinates(place) {
 
   } catch (err) {
     console.error("Geocoding error:", err);
+    return null;
   }
 }
 
 
 // ----------------------
-// 🧭 GET ROUTE
+// 🧭 GET ROUTE (FROM RENDER BACKEND)
 // ----------------------
 async function getRoute(start, end) {
   try {
-    console.log("START:", start);
-    console.log("END:", end);
 
-    const res = await fetch(
-      "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI2ZDY3NTI2MGJjNzQ3ZDJhNjZjNWI5MjQ1MmIzM2UxIiwiaCI6Im11cm11cjY0In0=", // 🔥 keep your key
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          coordinates: [
-            [start[0], start[1]],
-            [end[0], end[1]]
-          ]
-        })
-      }
-    );
+    const res = await fetch(`${BASE_URL}/route`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        coordinates: [
+          [start[0], start[1]],
+          [end[0], end[1]]
+        ]
+      })
+    });
 
     const data = await res.json();
-    console.log("ROUTE API RESPONSE:", data);
 
     if (!res.ok || !data.features) {
       alert("Route API Error");
@@ -103,16 +119,17 @@ async function getRoute(start, end) {
 
   } catch (err) {
     console.error("Routing error:", err);
+    return null;
   }
 }
 
 
 // ----------------------
-// 🧠 ML API CALL
+// 🧠 ML RISK API (RENDER)
 // ----------------------
 async function getRisk(point) {
   try {
-    const res = await fetch("http://localhost:5003/predict", {
+    const res = await fetch(`${BASE_URL}/predict`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -124,7 +141,6 @@ async function getRisk(point) {
     });
 
     const data = await res.json();
-    console.log("ML Response:", data);
     return data.risk || 0;
 
   } catch (err) {
@@ -156,11 +172,16 @@ async function calculateRouteRisk(points) {
 // ----------------------
 async function findRoute() {
 
+  if (!map) return;
+
   routeLayers.forEach(layer => map.removeLayer(layer));
   routeLayers = [];
 
-  const startInput = document.getElementById("start").value;
-  const endInput = document.getElementById("end").value;
+  const resultBox = document.getElementById("result");
+  if (resultBox) resultBox.innerText = "Loading safest route...";
+
+  const startInput = document.getElementById("start")?.value;
+  const endInput = document.getElementById("end")?.value;
 
   if (!startInput || !endInput) {
     alert("Enter both locations");
@@ -180,7 +201,6 @@ async function findRoute() {
   for (let route of data.features) {
 
     const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-
     const risk = await calculateRouteRisk(coords);
 
     routes.push({ coords, risk });
@@ -195,7 +215,7 @@ async function findRoute() {
     a.risk < b.risk ? a : b
   );
 
-  // draw all routes (red)
+  // 🔴 draw all routes
   routes.forEach(r => {
     const poly = L.polyline(r.coords, {
       color: "red",
@@ -206,7 +226,7 @@ async function findRoute() {
     routeLayers.push(poly);
   });
 
-  // draw safest (green)
+  // 🟢 safest route
   const safePoly = L.polyline(safest.coords, {
     color: "green",
     weight: 6
@@ -216,20 +236,22 @@ async function findRoute() {
 
   map.fitBounds(safePoly.getBounds());
 
-  const result = document.getElementById("result");
-  if (result) {
-    result.innerText = "Safest Route Risk: " + safest.risk.toFixed(2);
+  if (resultBox) {
+    resultBox.innerText = "Safest Route Risk: " + safest.risk.toFixed(2);
   }
 }
 
 
 // ----------------------
-// 🔥 CRIME HEATMAP (NEW)
+// 🔥 HEATMAP (RENDER)
 // ----------------------
 async function showHeatmap() {
 
+  if (!map) return;
+
   try {
-    const res = await fetch("http://localhost:5003/heatmap");
+
+    const res = await fetch(`${BASE_URL}/heatmap`);
     const data = await res.json();
 
     const heatData = data.map(p => [
