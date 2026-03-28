@@ -1,5 +1,5 @@
 flask
-sklearn
+scikit-learn
 flask-cors
 pandas
 numpy
